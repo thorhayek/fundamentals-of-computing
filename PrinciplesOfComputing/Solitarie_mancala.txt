@@ -1,0 +1,156 @@
+"""
+Student facing implement of solitaire version of Mancala - Tchoukaillon
+
+Goal: Move as many seeds from given houses into the store
+
+In GUI, you make ask computer AI to make move or click to attempt a legal move
+"""
+
+
+class SolitaireMancala:
+    """
+    Simple class that implements Solitaire Mancala
+    """
+    
+    def __init__(self):
+        """
+        Create Mancala game with empty store and no houses
+        """
+        self._config = [0]
+    
+    def set_board(self, configuration):
+        """
+        Take the list configuration of initial number of seeds for given houses
+        house zero corresponds to the store and is on right
+        houses are number in ascending order from right to left
+        """
+        #self._config = [configuration[i] for i in xrange(len(configuration)-1,-1,-1)]
+        self._config = configuration[:]
+    
+    def __str__(self):
+        """
+        Return string representation for Mancala board
+        """
+        return str(self._config)
+    
+    def get_num_seeds(self, house_num):
+        """
+        Return the number of seeds in given house on board
+        """
+        if( len(self._config)  <= 1):
+            return 0  # invalid config
+        
+        if(len(self._config) > house_num): 
+            return self._config[house_num]
+        else:
+            return 0
+
+    def is_game_won(self):
+        """
+        Check to see if all houses but house zero are empty
+        """
+        if( len(self._config)  < 0):
+            return False  # invalid config
+        elif(len(self._config) == 1):
+            return True  # only store no houses
+        
+        for seed in self._config[1:] :
+            if  seed <> 0:
+                return False
+        return True
+    
+    def is_legal_move(self, house_num):
+        """
+        Check whether a given move is legal
+        """
+        if( len(self._config) <= house_num or house_num ==0):
+            return False  # invalid config or cant move store
+        elif(self._config[house_num] != house_num):
+            return False
+        return True
+                
+    
+    def apply_move(self, house_num):
+        """
+        Move all of the stones from house to lower/left houses
+        Last seed must be played in the store (house zero)
+        """
+        if(not self.is_legal_move(house_num)):
+            return
+        stones = self.get_num_seeds(house_num)
+        
+        for index in xrange(house_num-1,-1,-1):
+            if(stones <= 0):
+                return
+            stones -= 1
+            self._config[index] += 1
+        self._config[house_num] = 0
+          
+
+    def choose_move(self):
+        """
+        Return the house for the next shortest legal move
+        Shortest means legal move from house closest to store
+        Note that using a longer legal move would make smaller illegal
+        If no legal move, return house zero
+        """
+        if(len(self._config) <= 1 ):
+            return 0
+        for house_num in xrange(1,len(self._config)):
+            if(self.is_legal_move(house_num)):
+                return house_num
+        return 0
+    
+    def plan_moves(self):
+        """
+        Return a sequence (list) of legal moves based on the following heuristic: 
+        After each move, move the seeds in the house closest to the store 
+        when given a choice of legal moves
+        Not used in GUI version, only for machine testing
+        """
+        moves = [] 
+        move_num = self.choose_move()
+        while(move_num != 0):
+            self.apply_move(move_num)
+            moves.append(move_num)
+            move_num = self.choose_move()
+        return moves
+ 
+
+# Create tests to check the correctness of your code
+
+def test_mancala():
+    """
+    Test code for Solitaire Mancala
+    """
+    
+    my_game = SolitaireMancala()
+    print "Testing init - Computed:",my_game ,"Expected: [0]"
+    
+    # No Result Config 
+    config1 = [0, 0, 1, 1, 3, 5, 0] 
+    my_game.set_board(config1)   
+    
+    print "Testing set_board - Computed:", str(my_game), "Expected:", str([0, 0, 1, 1, 3, 5, 0])
+    print "Testing get_num_seeds - Computed:", my_game.get_num_seeds(1), "Expected:", config1[1]
+    print "Testing get_num_seeds - Computed:", my_game.get_num_seeds(3), "Expected:", config1[3]
+    print "Testing get_num_seeds - Computed:", my_game.get_num_seeds(5), "Expected:", config1[5]
+
+    # WINNING Config 
+    config2 = [0,1,2,2,4]     
+    my_game.set_board(config2)
+    
+    moves = my_game.plan_moves()
+    print "Testing plan moves",moves , "Expected :", str([1,2,1,4,1,3,1,2,1])
+    
+    config2 = [4,2,2,1,0]
+    my_game.set_board(config2)
+    for idx in xrange(len(moves)):
+        my_game.apply_move(moves[idx])
+    print "Testing game result - computed", str(my_game), "Expected:", str([9,0,0,0,0])
+test_mancala()
+
+
+# Import GUI code once you feel your code is correct
+#import poc_mancala_gui
+#poc_mancala_gui.run_gui(SolitaireMancala())

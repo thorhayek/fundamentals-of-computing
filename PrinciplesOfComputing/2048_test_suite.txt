@@ -1,0 +1,54 @@
+import poc_simpletest
+
+def run_2048_suite(game_class):
+    """
+    Some informal testing code
+    """
+    
+    # create a TestSuite object
+    suite = poc_simpletest.TestSuite()
+    
+    # create a game
+    game = game_class(5,4)
+    
+    print game
+    # add tests using suite.run_test(....) here
+    
+    suite.run_test(game.get_grid_height(),5,"Testing get grid height")
+    suite.run_test(game.get_grid_width(),4,"Testing get grid width")
+    suite.run_test(countValidCells(game),2,"Testing get grid width after reset")
+     # move up generated indices
+    suite.run_test(game.get_line((0,0),(1,0)),[[0,0],[1,0],[2,0],[3,0],[4,0]], "testing move up")
+    
+    # move down # generated indices
+    suite.run_test(game.get_line((4,0),(-1,0)),[[4,0],[3,0],[2,0],[1,0],[0,0]], "testing move up")
+    
+    # move right # generated indices
+    suite.run_test(game.get_line((0,3),(0,-1)),[[0,3],[0,2],[0,1],[0,0]], "testing move up")
+    
+    # move left # genearted indices
+    suite.run_test(game.get_line((0,0),(0,1)),[[0,0],[0,1],[0,2],[0,3]], "testing move up")
+    
+    game.reset()
+    suite.run_test(game.get_grid_height(),5,"Testing get grid height after reset")
+    suite.run_test(game.get_grid_width(),4,"Testing get grid width after reset")
+    suite.run_test(countValidCells(game),2,"Testing get grid width after reset")
+    #suite.run_test(game.set_tile(2,3,15),15,"testing get grid set value")
+    suite.run_test(game.set_tile(-5,3,15),None,"testing get grid set value")
+    game.set_tile(2,3,15)
+    suite.run_test(game.get_tile(2,3),15,"testing get grid get value")
+    
+   
+    
+    
+    
+    # report number of tests and failures
+    suite.report_results()
+    
+def countValidCells(game):
+    count = 0 
+    for row in range(game.get_grid_height()):
+        for column in range(game.get_grid_width()):
+            if(game.get_tile(row,column)!=0):
+               count += 1
+    return count

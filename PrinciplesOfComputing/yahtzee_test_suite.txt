@@ -1,0 +1,78 @@
+"""
+Test suite for gen_all_holds in "Yahtzee"
+"""
+
+import poc_simpletest
+import math
+
+def run_suite(gen_all_holds):
+    """
+    Some informal testing code for gen_all_holds
+    """
+    
+    # create a TestSuite object
+    suite = poc_simpletest.TestSuite()
+    
+    # test gen_all_holds on various inputs
+    hand = tuple([])
+    suite.run_test(gen_all_holds(hand), set([()]), "Test #1:")
+
+    hand = tuple([2, 4])
+    suite.run_test(gen_all_holds(hand), set([(), (2,), (4,), (2, 4)]), "Test #2:")
+    
+    hand = tuple((3, 3, 3))
+    suite.run_test(gen_all_holds(hand), set([(), (3,), (3, 3), (3, 3, 3)]), "Test #4:")
+
+    hand = tuple((1, 2, 2))
+    suite.run_test(gen_all_holds(hand), set([(), (1,), (2,), (1, 2), (2, 2), (1, 2, 2)]), "Test #3:")
+
+    hand = tuple([2, 3, 6])
+    suite.run_test(gen_all_holds(hand),set([(), (2,), (3,), (6,), (2, 3), (2, 6), (3, 6), (2, 3, 6)]), "Test #5:")
+
+    suite.report_results()
+    
+    
+def run_score_suite(score):
+    
+    """
+    test code for score method
+    """
+    suite = poc_simpletest.TestSuite()
+    
+    hand = (1, 1, 1, 5, 6)
+    suite.run_test(score(hand), 6, "Test #1:")
+    hand1 =(3,3,3,6,5)
+    suite.run_test(score(hand1), 9, "Test #2:")
+    hand2 = (1,1,1,1,1)
+    suite.run_test(score(hand2), 5, "Test #3:")
+    hand3 = (1,2,3,4,5)
+    suite.run_test(score(hand3), 5, "Test #4:")
+    hand4 = (1,2,2,2,6)
+    suite.run_test(score(hand4), 6, "Test #5:")
+    hand5 = (4,4,5,5,6)
+    suite.run_test(score(hand5), 10, "Test #6:")
+    hand6 = (3,3,3,5,5)
+    suite.run_test(score(hand6), 10, "Test #7:")
+    hand7 = (3,3,3,4,4)
+    suite.run_test(score(hand7), 9, "Test #8:")
+    hand8 = (5,5,5,6,6)
+    suite.run_test(score(hand8), 15, "Test #9:")
+    hand9 = (5,5,6,6,6)
+    suite.run_test(score(hand9), 18, "Test #10:")
+    
+    suite.report_results()
+    
+def run_expected_value_suite(expected_value):
+    
+    """
+    test code for score method
+    """
+    suite = poc_simpletest.TestSuite()
+    
+    
+    #hand = (1, 1, 1, 5, 6)
+    suite.run_test(math.ceil(expected_value((4,4),6,3)-10.4166666667), 0, "Test #1:")
+    
+    suite.report_results()
+        
+    

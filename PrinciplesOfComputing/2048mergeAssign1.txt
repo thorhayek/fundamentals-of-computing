@@ -1,0 +1,57 @@
+"""
+Merge function for 2048 game.
+"""
+
+def merge(line):
+    """
+    Function that merges a single row or column in 2048.
+    """
+    # replace with your code
+    #newlist = list(line)
+    newlist = defragment(line)
+    return combine(newlist)
+    #return []
+
+def combine(new_list):
+    
+    """
+    Function that combines pairs and defragments
+    """
+    # if i = i+1 then i = 2I and i+1=0
+    for index in xrange(len(new_list)):
+        if( index+1  == len(new_list)):
+            break
+        if(new_list[index] == new_list[index+1] and new_list[index] != 0) :
+            new_list[index] += new_list[index]
+            new_list[index+1] = 0 
+            index += 1   
+    return defragment(new_list)
+
+def defragment(line):
+    
+    """
+    Function that defragments the input list
+    """
+    
+    newlist = [0]*len(line) 
+    jdx = 0
+    #print type(line)
+    for ele in line:
+        if(ele ==0):
+            continue
+        newlist[jdx] = ele
+        jdx += 1
+    return newlist
+
+def test_merge():
+    
+    """
+    Function that tests the merge function in 2048.
+    """
+    print "Expected [4, 4, 0, 0] ","actual: ", str(merge([2, 0, 2, 4]))
+    print "Expected [4, 0, 0, 0] ","actual: ", str(merge([0, 0, 2, 2]))
+    print "Expected [4, 0, 0, 0] ","actual: ", str(merge([2, 2, 0, 0]))
+    print "Expected [4, 4, 2, 0, 0] ","actual: ", str(merge([2, 2, 2, 2, 2]))
+    print "Expected [8, 32, 8, 0] ","actual: ", str(merge([8, 16, 16, 8]))
+    
+#test_merge()

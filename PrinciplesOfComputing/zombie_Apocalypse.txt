@@ -1,0 +1,245 @@
+"""
+Student portion of Zombie Apocalypse mini-project
+"""
+
+import random
+import poc_grid
+import poc_queue
+import poc_zombie_gui
+
+# global constants
+EMPTY = 0 
+FULL = 1
+FOUR_WAY = 0
+EIGHT_WAY = 1
+OBSTACLE = 5
+HUMAN = 6
+ZOMBIE = 7
+
+
+class Apocalypse(poc_grid.Grid):
+    """
+    Class for simulating zombie pursuit of human on grid with
+    obstacles
+    """
+
+    def __init__(self, grid_height, grid_width, obstacle_list = None, 
+                 zombie_list = None, human_list = None):
+        """
+        Create a simulation of given size with given obstacles,
+        humans, and zombies
+        """
+        poc_grid.Grid.__init__(self, grid_height, grid_width)
+        if obstacle_list != None:
+            for cell in obstacle_list:
+                self.set_full(cell[0], cell[1])
+                print cell
+        if zombie_list != None:
+            self._zombie_list = list(zombie_list)
+        else:
+            self._zombie_list = []
+        if human_list != None:
+            self._human_list = list(human_list)  
+        else:
+            self._human_list = []
+        
+    def clear(self):
+        """
+        Set cells in obstacle grid to be empty
+        Reset zombie and human lists to be empty
+        """
+        
+        poc_grid.Grid.clear(self)
+        self._human_list = []
+        self._zombie_list = []
+        
+    def add_zombie(self, row, col):
+        """
+        Add zombie to the zombie list
+        """
+        self._zombie_list.append((row, col))
+        
+                
+    def num_zombies(self):
+        """
+        Return number of zombies
+        """
+        return len(self._zombie_list)       
+          
+    def zombies(self):
+        """
+        Generator that yields the zombies in the order they were
+        added.
+        """
+        for tup in self._zombie_list:
+            yield tup
+        
+
+    def add_human(self, row, col):
+        """
+        Add human to the human list
+        """
+        self._human_list.append((row, col))
+        
+    def num_humans(self):
+        """
+        Return number of humans
+        """
+        return len(self._human_list)
+    
+    def humans(self):
+        """
+        Generator that yields the humans in the order they were added.
+        """
+        # replace with an actual generator
+        for tup in self._human_list:
+            yield tup
+        
+    def compute_distance_field(self, entity_type):
+        """
+        Function computes and returns a 2D distance field
+        Distance at member of entity_list is zero
+        Shortest paths avoid obstacles and use four-way distances
+        """
+        
+        height = self.get_grid_height() 
+        width  = self.get_grid_width()
+        dim = height * width
+        boundry_lst = self._zombie_list if(entity_type == ZOMBIE) else self._human_list 
+        boundry = poc_queue.Queue()
+        
+        if(entity_type == OBSTACLE):
+            print "here"
+        
+        # add all the items of the target type to queue 
+        map(boundry.enqueue, boundry_lst)
+        #print "queue populated: ",boundry
+        
+        # updates the distanc field
+        distance_field = [[dim for _ in range(width)] for _ in range(height)]
+        #print "distance init:", distance_field
+        
+        # initialized all cells to empty 
+        visited = poc_grid.Grid(height,width)
+        
+        # init the boundry queue
+        self.init_boundry(boundry,distance_field,visited)
+        #print "boundry init",boundry
+        
+        
+        # compute distance field using bfs
+        while len(boundry) != 0:
+        
+            target = boundry.dequeue()
+            
+            for neighbor in self.four_neighbors(target[0],target[1]):
+                
+                # if a cell is empty aka not visited and not an obstacle
+                # obstacles have been marked as set full
+                if visited.is_empty(neighbor[0],neighbor[1]) and self.is_empty(neighbor[0],neighbor[1]):
+                    
+                    # mark as visited 
+                    visited.set_full(neighbor[0],neighbor[1])
+                    # set distance field for neighbors 
+                    distance_field[neighbor[0]][neighbor[1]] = distance_field[target[0]][target[1]] + 1
+                    boundry.enqueue(neighbor)
+        
+        return distance_field
+    
+    def move_humans(self, zombie_distance_field):
+        """
+        Function that moves humans away from zombies, diagonal moves
+        are allowed
+        """
+        
+        if(zombie_distance_field is None):
+            return
+        temp_list = [] 
+        # for all humans in list 
+        for human in self.humans():
+            
+            curr_dist = zombie_distance_field[human[0]][human[1]]
+           
+            max_dist = -float('Inf')
+            max_dist_lst = []
+            # see if their neigbors cells have higher value of distance
+            for neighbor in self.eight_neighbors(human[0],human[1]):
+                
+                # check to determine whether neighbor is obstacle
+                if(not self.is_empty(neighbor[0],neighbor[1])):
+                    continue
+                neigh_dist = zombie_distance_field[neighbor[0]][neighbor[1]]
+                if( neigh_dist > curr_dist and neigh_dist > max_dist ):
+                    max_dist_lst = [neighbor]
+                    max_dist = neigh_dist
+                elif(neigh_dist > curr_dist and neigh_dist == max_dist ):
+                    max_dist_lst.append(neighbor)
+                    
+            # flee brain eating zombies if required
+            if(len(max_dist_lst) > 0):
+                new_cell = random.choice(max_dist_lst)
+                # can two humans move to the same cell # todo
+                #print "human list ",self._human_list
+                temp_list.append(new_cell)
+                #print "human list ",self._human_list
+               
+            else:
+                temp_list.append(human)
+        
+        self._human_list = temp_list
+        
+            
+            
+    def move_zombies(self, human_distance_field):
+        """
+        Function that moves zombies towards humans, no diagonal moves
+        are allowed
+        """
+        if(human_distance_field is None):
+            return
+        temp_list = [] 
+        for zombie in self.zombies():
+            curr_dist = human_distance_field[zombie[0]][zombie[1]]
+            min_dist = float('Inf')
+            min_dist_list = []
+            for neighbor in self.four_neighbors(zombie[0],zombie[1]):
+                if(not self.is_empty(neighbor[0],neighbor[1])):
+                    continue
+                neigh_dist = human_distance_field[neighbor[0]][neighbor[1]]
+                if(neigh_dist < curr_dist and neigh_dist < min_dist):
+                    min_dist_list = [neighbor]
+                    min_dist = neigh_dist
+                elif(neigh_dist < curr_dist and neigh_dist == min_dist):
+                    min_dist_list.append(neighbor)
+                    
+        # attack humans if possible
+            if(len(min_dist_list)>0):
+                new_cell = random.choice(min_dist_list)
+                temp_list.append(new_cell)
+            else:
+                temp_list.append(zombie)
+        self._zombie_list = temp_list
+         
+    def init_boundry(self,queue_lst,distance_field,visited):
+        """
+        Sets the elements of the boundry / queue to full/visited
+        and distance field to 0 
+        """
+        for item in queue_lst:
+            visited.set_full(item[0],item[1])
+            distance_field[item[0]][item[1]] = 0
+        
+# Start up gui for simulation - You will need to write some code above
+# before this will work without errors
+#a = Apocalypse(5,5)
+#a.add_human(1,1)
+#a.add_zombie(1,2)
+#a.compute_distance_field(ZOMBIE)
+#a.compute_distance_field(HUMAN)
+#a = Apocalypse(3, 3, [], [(2, 2)], [(1, 1)])
+#print a.compute_distance_field(HUMAN)
+#b=  a.compute_distance_field(ZOMBIE)
+#a.move_humans(b)
+#print a._human_list
+#dist = [[4, 3, 2], [3, 2, 1], [2, 1, 0]],
+poc_zombie_gui.run_gui(Apocalypse(30, 40))
